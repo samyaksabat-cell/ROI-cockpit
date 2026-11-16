@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en-SG">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <meta name="description" content="A local-only pilot business-case workspace. Engineering evidence, explicit assumptions, and modeled capacity value.">
+  <title>ROI Cockpit · Pilot business case</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <aside class="sidebar" aria-label="Workspace">
+    <a class="brand" href="#evidence" aria-label="ROI Cockpit home"><span class="brand-mark" aria-hidden="true">r<span>↗</span></span><span>ROI Cockpit<small>PILOT TO BUSINESS CASE</small></span></a>
+    <div class="workspace-label">YOUR WORKSPACE</div>
+    <nav aria-label="Main navigation">
+      <a href="#evidence" data-view="evidence" aria-current="page"><span class="nav-icon" aria-hidden="true">▦</span> Pilot evidence <span class="nav-index">01</span></a>
+      <a href="#inputs" data-view="inputs"><span class="nav-icon" aria-hidden="true">≡</span> Data &amp; assumptions <span class="nav-index">02</span></a>
+      <a href="#rollout" data-view="rollout"><span class="nav-icon" aria-hidden="true">↗</span> Rollout case <span class="nav-index">03</span></a>
+      <a href="#readout" data-view="readout"><span class="nav-icon" aria-hidden="true">▤</span> Executive readout <span class="nav-index">04</span></a>
+    </nav>
+    <div class="sidebar-note"><span class="status-dot"></span> LOCAL WORKSPACE<p>No uploads. No tracking.<br>Data stays in this browser tab.<br>Reload clears your edits.</p></div>
+    <div class="sidebar-bottom">Built for the enterprise AE.<br><span>Evidence first. Assumptions visible.</span></div>
+  </aside>
+  <div class="app-shell">
+    <header class="topbar"><div><span class="breadcrumb">Workspace</span><span class="slash" aria-hidden="true">/</span><strong id="breadcrumb-view">Pilot evidence</strong></div><div class="topbar-right"><span class="local-pill"><span class="status-dot"></span> Local only</span><span class="avatar" role="img" aria-label="Account executive workspace">AE</span></div></header>
+    <main id="main" tabindex="-1">
+      <div class="page-heading">
+        <div><p class="eyebrow">PILOT WORKSPACE <span> / </span> SINGAPORE · SGD</p><h1>From pilot to possibility.</h1><p class="subtitle">Turn engineering evidence into a business case you can stand behind.</p></div>
+        <div class="heading-actions"><button id="download-snapshot" class="button secondary" disabled>↓ Evidence JSON</button><button id="download-readout" class="button primary" disabled>↓ Export readout</button></div>
+      </div>
+      <div class="scenario-strip"><div><span id="provenance-badge" class="badge synthetic">Synthetic</span><strong id="scenario-display">DBS, illustrative</strong></div><span id="scenario-note">Synthetic data, not customer results or an endorsement.</span></div>
+      <div id="status" class="notice" role="status" aria-live="polite">Loading synthetic fixture…</div>
+      <div id="validation-errors" class="notice error" role="alert" hidden></div>
+      <noscript><p class="notice error">JavaScript is required for local calculations. No customer data leaves this page.</p></noscript>
+
+      <section id="evidence" class="view" aria-labelledby="evidence-heading">
+        <div class="section-heading"><div><p class="eyebrow">01 / MEASURE WHAT CHANGED</p><h2 id="evidence-heading">Pilot evidence</h2><p>Baseline versus pilot. Observations, not a claim of causality.</p></div><a class="text-link" href="#inputs">Edit pilot data <span aria-hidden="true">↗</span></a></div>
+        <div id="periods" class="periods"></div>
+        <div id="metric-cards" class="metric-grid"></div>
+        <div class="evidence-bottom">
+          <div class="panel comparison-panel"><div class="panel-heading"><h3>The evidence, side by side</h3><span class="micro-label">OBSERVED</span></div><div id="comparison-table" class="table-wrap" tabindex="0" aria-label="Metric comparison table"></div></div>
+          <aside class="panel interpretation"><span class="mini-icon" aria-hidden="true">↗</span><p class="eyebrow">THE BRIDGE TO VALUE</p><h3>Faster flow is a signal. <br>Saved labor is an assumption.</h3><p>Cycle time and review turnaround are elapsed time. They are never counted as saved engineering hours in this model.</p><div id="throughput-summary"></div><a class="text-link" href="#rollout">Explore the rollout case →</a></aside>
+        </div>
+        <div class="panel footnote-panel"><span class="badge neutral">Context, not currency</span><p>Readiness is a supplied 1–5 ordinal assessment, not an official certification. Factory credits measure consumption, not SGD. Active engineers are distinct engineers who merged at least one PR in each period.</p></div>
+      </section>
+
+      <section id="inputs" class="view" aria-labelledby="inputs-heading" hidden>
+        <div class="section-heading"><div><p class="eyebrow">02 / MAKE THE ASSUMPTIONS EXPLICIT</p><h2 id="inputs-heading">Data &amp; assumptions</h2><p>Aggregate inputs only. Keep identities, credentials, and source code out of this workspace.</p></div><button id="reset-demo" class="button secondary">Reset demo</button></div>
+        <div class="panel import-panel"><div><span class="badge neutral">CSV · MAX 1 MB</span><h3>Bring your pilot evidence.</h3><p>Two rows: baseline and pilot. Same team, same definitions. Preview before replacing.</p></div><div class="import-actions"><button id="download-template" class="button secondary">↓ CSV template</button><label class="button primary upload-label" for="csv-file">↑ Import CSV<input id="csv-file" type="file" accept=".csv,text/csv"></label></div></div>
+        <p class="helper">The template contains illustrative example numbers. Replace them with your aggregates. Imported data is marked “customer-provided, unverified”; demo edits stay synthetic.</p>
+        <div id="import-error" class="notice error" role="alert" hidden></div>
+        <div class="panel"><div class="panel-heading"><h3>Observation data</h3><span class="micro-label">EDITABLE · END DATES EXCLUSIVE</span></div>
+          <div class="scenario-input"><label for="scenario">Scenario label</label><input id="scenario" type="text" maxlength="120" value="DBS, illustrative"></div>
+          <div id="observation-inputs" class="table-wrap" tabindex="0" aria-label="Editable observation data"></div>
+          <p class="panel-helper">Cycle and review hours are arithmetic means for merged PRs. Leave unavailable hours, credits, or readiness blank, never zero-fill. Counts and active engineers are required. Dates use YYYY-MM-DD.</p>
+        </div>
+        <div class="section-heading compact"><div><h3>Business-case assumptions</h3><p>Editable estimates, not measured outcomes. All starter values are synthetic.</p></div><span class="badge assumption">Assumption</span></div>
+        <div id="assumption-inputs" class="assumption-grid"></div>
+        <div class="panel ramp-panel"><div class="panel-heading"><div><h3>Adoption ramp</h3><p>Share of total in-scope engineers active each month. Decreases are allowed.</p></div><span class="badge assumption">12 MONTHS</span></div><div id="ramp-inputs" class="ramp-grid"></div></div>
+        <p class="notice">Illustrative cost excludes implementation, training, taxes, and other tools. This is not complete procurement TCO. Actual credit consumption is not converted to SGD.</p>
+      </section>
+
+      <section id="rollout" class="view" aria-labelledby="rollout-heading" hidden>
+        <div class="section-heading"><div><p class="eyebrow">03 / MODEL THE OPPORTUNITY</p><h2 id="rollout-heading">The 12-month rollout case</h2><p>Potential capacity value, not cash savings or guaranteed productivity.</p></div><span class="badge modeled">Modeled</span></div>
+        <div id="rollout-summary"></div>
+        <div class="panel chart-panel"><div class="panel-heading"><div><h3>A phased path to capacity</h3><p>Monthly potential capacity value and illustrative spend in SGD.</p></div><div class="legend"><span><i class="value-key"></i> Capacity value</span><span><i class="cost-key"></i> Spend</span></div></div><div id="rollout-chart" class="bar-chart" aria-hidden="true"></div><p class="panel-helper">Exact values and the adoption ramp appear in the table below. Cost is illustrative, not Factory list price.</p></div>
+        <div class="panel"><div class="panel-heading"><h3>Month by month</h3><a class="text-link" href="#inputs">Adjust assumptions ↗</a></div><div id="rollout-table" class="table-wrap" tabindex="0" aria-label="Monthly rollout table"></div></div>
+        <details class="panel methodology"><summary>How the model works</summary><div><p>Monthly assisted PRs = scope engineers × adoption share × pilot PRs per active engineer per normalized month × pilot assisted share.</p><p>Capacity hours = assisted PRs × assumed labor hours saved per PR. Capacity value = capacity hours × (annual loaded cost ÷ annual productive hours). Spend = adopted engineers × illustrative monthly cost.</p><p>Year-one totals sum all 12 months. ROI = (capacity value − spend) ÷ spend × 100. A normalized month is 365/12 days. Readiness, credit consumption, cycle time, and review turnaround never multiply the financial benefit.</p><p>Cumulative break-even is the first month with positive cumulative spend and cumulative capacity value at least equal to spend. It excludes unmodeled upfront investment.</p><p>Source definitions and equations: <a href="./docs/methodology.md">methodology</a> and <a href="./docs/data-contract.md">data contract</a>.</p></div></details>
+      </section>
+
+      <section id="readout" class="view" aria-labelledby="readout-heading" hidden>
+        <div class="section-heading"><div><p class="eyebrow">04 / TAKE A CLEAR STORY FORWARD</p><h2 id="readout-heading">Executive readout</h2><p>A reproducible brief, with the evidence and caveats attached.</p></div><button id="print-readout" class="button secondary">Print readout</button></div>
+        <article class="panel report"><div class="report-masthead"><span class="eyebrow">PILOT → BUSINESS CASE</span><span class="badge modeled">Decision draft</span></div><h2 id="report-title">Pilot business case</h2><p id="report-provenance" class="helper"></p><div id="report-summary"></div><div class="report-callout">Potential capacity value, not cash savings or guaranteed productivity.</div><h3>Evidence at a glance</h3><div id="report-evidence" class="table-wrap" tabindex="0" aria-label="Readout evidence table"></div><h3>What needs to be true</h3><ul id="report-assumptions"></ul><h3>Before a rollout decision</h3><ol><li>Confirm comparable teams, measurement definitions, and PR attribution with the engineering sponsor.</li><li>Validate assumed labor hours saved using a sampled time study, not elapsed cycle-time changes.</li><li>Confirm adoption, commercial terms, productive hours, and excluded costs with finance.</li><li>Agree a decision gate, a measurement owner, and the next observation period.</li></ol><h3>Limitations &amp; data quality</h3><ul id="report-limitations"></ul></article>
+        <details class="panel source-preview"><summary>Full Markdown report preview, including monthly figures</summary><pre id="readout-preview"></pre></details>
+        <p class="notice">Exports stay on your device unless you share them. Browser-local calculations do not imply local AI processing: using <code>/pilot-readout</code> with customer data requires explicit authorization for your configured Droid/model service.</p>
+      </section>
+      <footer><span>ROI Cockpit <span class="footer-separator">/</span> Evidence first.</span><span>SGD · Model <span id="model-version">1.0.0</span> · No external requests</span></footer>
+    </main>
+  </div>
+  <dialog id="import-dialog" aria-labelledby="import-title">
+    <div class="dialog-heading"><div><p class="eyebrow">REVIEW BEFORE REPLACING</p><h2 id="import-title">Preview pilot data</h2></div><button id="cancel-import" class="icon-button" aria-label="Cancel import">×</button></div>
+    <p>Importing marks these observations as customer-provided, unverified. It does not verify their accuracy. Existing observations will be replaced; business assumptions stay unchanged.</p>
+    <div id="import-preview" class="table-wrap" tabindex="0" aria-label="Imported data preview"></div>
+    <div class="dialog-actions"><button id="reject-import" class="button secondary">Keep current data</button><button id="confirm-import" class="button primary">Replace observation data</button></div>
+  </dialog>
+  <dialog id="reset-dialog" aria-labelledby="reset-title"><h2 id="reset-title">Reset this workspace?</h2><p>This replaces observations, assumptions, and your scenario label with the synthetic demo. Export any work you want to keep first.</p><div class="dialog-actions"><button id="cancel-reset" class="button secondary">Keep my work</button><button id="confirm-reset" class="button primary">Reset to demo</button></div></dialog>
+</body>
+</html>

@@ -1,0 +1,6 @@
+customer-data/
+output/
+node_modules/
+__pycache__/
+*.log
+.DS_Store
