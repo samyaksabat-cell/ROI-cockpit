@@ -100,7 +100,7 @@ hash (`#evidence`, `#inputs`, `#rollout`, `#readout`), so you can link straight 
 | 03 | **Rollout case** | See year-one capacity value, illustrative spend, net capacity value, capacity hours, ROI, benefit/cost ratio, and break-even month, plus a monthly chart and a full month-by-month table. |
 | 04 | **Executive readout** | A one-page CIO/CFO summary: headlines, pilot results, editable success-plan status, three assumption checks, next steps and caveats. Print / Save as PDF, download Word, or export full Evidence JSON. |
 
-A headline strip on every view shows net capacity value, capacity-value ROI, payback
+A headline strip on Rollout case and Executive readout shows net capacity value, capacity-value ROI, payback
 (cumulative capacity-value break-even, not cash payback), and potential hours returned.
 Success targets default to cycle time ≥20% lower, assisted share ≥40%, and readiness ≥3.
 Edit them in Data & assumptions. Missing evidence is No data, never a failed zero.

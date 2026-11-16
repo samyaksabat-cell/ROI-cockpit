@@ -57,6 +57,7 @@ function showView({ focus = false } = {}) {
   // Preserve the skip link's main target, but never hide every view for an unknown hash.
   const name = Object.hasOwn(viewNames, requested) ? requested : "evidence";
   for (const key of Object.keys(viewNames)) $(key).hidden = key !== name;
+  for (const id of ["headline-strip", "headline-note"]) $(id).hidden = !["rollout", "readout"].includes(name);
   document.querySelectorAll("[data-view]").forEach(link => {
     if (link.dataset.view === name) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");

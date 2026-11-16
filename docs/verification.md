@@ -24,7 +24,7 @@ Checks run against the app served at `http://127.0.0.1:8000` (headless Chrome 15
 - Reset asks for confirmation; cancel keeps edits and confirm restores the synthetic demo.
 - An invalid CSV shows an error and leaves the state unchanged. Template download, preview,
   cancel, re-import, and confirm all work, and provenance becomes "customer-provided, unverified".
-- The headline strip shows on all four views and matches exports (SGD 1,156,797 net, 388.8%,
+- The headline strip shows only on Rollout case and Executive readout and matches exports (SGD 1,156,797 net, 388.8%,
   Month 1, 14,543 hrs). Invalid targets clear it; blocked or zero-spend cases show N/A.
 - Editing a success target updates Met / Not met; a missing metric shows No data.
 - The Word download is a valid ZIP with the summary content. Evidence JSON is schema 2.
