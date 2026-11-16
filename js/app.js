@@ -223,12 +223,35 @@ function renderRollout(result) {
   table.tBodies[0].append(total); put("rollout-table", table);
 }
 
+function briefTable({ headers, rows, kind = "" }, title) {
+  const table = el("table", `brief-table${kind ? ` brief-${kind}` : ""}`);
+  const head = el("tr");
+  for (const header of headers) { const th = el("th", "", header); th.scope = "col"; head.append(th); }
+  const thead = el("thead"); thead.append(head);
+  const body = el("tbody");
+  for (const row of rows) {
+    const tr = el("tr");
+    row.forEach((value, i) => {
+      const td = el("td");
+      if (kind === "status" && i === row.length - 1) td.append(el("span", `status-pill status-${value.toLowerCase().replace(/\s+/g, "-")}`, value));
+      else { td.textContent = value; if (/^-?SGD /.test(value)) td.className = "money-cell"; }
+      tr.append(td);
+    });
+    body.append(tr);
+  }
+  table.append(thead, body);
+  // Narrow screens can still scroll these tables, so keep them keyboard reachable.
+  const wrap = el("div", "table-wrap"); wrap.tabIndex = 0; wrap.setAttribute("role", "region"); wrap.setAttribute("aria-label", `${title} table`);
+  wrap.append(table); return wrap;
+}
+
 function renderReport(snapshot) {
   const blocks = buildBrief(snapshot);
-  put("brief-content", ...blocks.map(([title, lines], index) => {
+  put("brief-content", ...blocks.map(([title, lines, table], index) => {
     const section = el("section", "brief-section");
     section.append(el(index === 0 ? "h2" : "h3", "", title));
-    for (const line of lines) section.append(el("p", "", line));
+    if (table) section.append(briefTable(table, title));
+    for (const line of lines) section.append(el("p", table ? "brief-note" : "", line));
     return section;
   }));
   $("readout-preview").textContent = buildReadout(snapshot);

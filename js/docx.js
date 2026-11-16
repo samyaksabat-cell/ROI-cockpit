@@ -40,9 +40,22 @@ function zip(files) {
 }
 
 export function buildDocx(snapshot) {
-  const paragraph = (text, heading = false) => `<w:p><w:pPr>${heading ? "<w:keepNext/>" : ""}<w:spacing w:after="${heading ? 70 : 40}"/></w:pPr><w:r><w:rPr>${heading ? '<w:b/><w:color w:val="087560"/><w:sz w:val="21"/>' : '<w:sz w:val="17"/>'}</w:rPr><w:t xml:space="preserve">${xml(text)}</w:t></w:r></w:p>`;
-  const body = buildBrief(snapshot).map(([title, lines]) => paragraph(title, true) + lines.map(line => paragraph(line)).join("")).join("");
-  return zip({
+  const run = (text, { bold = false, color = "", size = 17 } = {}) => `<w:r><w:rPr>${bold ? "<w:b/>" : ""}${color ? `<w:color w:val="${color}"/>` : ""}<w:sz w:val="${size}"/></w:rPr><w:t xml:space="preserve">${xml(text)}</w:t></w:r>`;
+  const paragraph = (text, heading = false) => `<w:p><w:pPr>${heading ? "<w:keepNext/>" : ""}<w:spacing w:after="${heading ? 70 : 40}"/></w:pPr>${heading ? run(text, { bold: true, color: "087560", size: 21 }) : run(text)}</w:p>`;
+  const statusColor = { "Met": "087560", "Not met": "A03030", "No data": "586B7C" };
+  const table = ({ headers, rows, kind = "" }) => {
+    const width = 10546, weights = headers.map((_, i) => i === 0 && kind !== "kpi" ? 1.6 : 1);
+    const total = weights.reduce((a, b) => a + b, 0), cols = weights.map(w => Math.floor(width * w / total));
+    const border = side => `<w:${side} w:val="single" w:sz="4" w:space="0" w:color="D5DFE5"/>`;
+    const cell = (text, i, header, last) => `<w:tc><w:tcPr><w:tcW w:w="${cols[i]}" w:type="dxa"/>${header ? '<w:shd w:val="clear" w:color="auto" w:fill="E8F4EF"/>' : ""}</w:tcPr><w:p><w:pPr><w:spacing w:after="0"/></w:pPr>${run(text, {
+      bold: header || (kind === "kpi") || (kind === "status" && last),
+      color: kind === "status" && last && !header ? statusColor[text] ?? "" : header ? "14263A" : "",
+      size: kind === "kpi" && !header ? 20 : 16 })}</w:p></w:tc>`;
+    const row = (values, header) => `<w:tr>${header ? "<w:trPr><w:tblHeader/></w:trPr>" : ""}${values.map((v, i) => cell(v, i, header, i === values.length - 1)).join("")}</w:tr>`;
+    return `<w:tbl><w:tblPr><w:tblW w:w="${width}" w:type="dxa"/><w:tblBorders>${["top", "left", "bottom", "right", "insideH", "insideV"].map(border).join("")}</w:tblBorders><w:tblLayout w:type="fixed"/><w:tblCellMar><w:top w:w="30" w:type="dxa"/><w:left w:w="80" w:type="dxa"/><w:bottom w:w="30" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${cols.map(w => `<w:gridCol w:w="${w}"/>`).join("")}</w:tblGrid>${row(headers, true)}${rows.map(r => row(r, false)).join("")}</w:tbl>`;
+  };
+  const body = buildBrief(snapshot).map(([title, lines, data]) =>
+    paragraph(title, true) + (data ? table(data) : "") + lines.map(line => paragraph(line)).join("")).join("");  return zip({
     "[Content_Types].xml": '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
     "_rels/.rels": '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
     "word/document.xml": `<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="680" w:right="680" w:bottom="680" w:left="680"/></w:sectPr></w:body></w:document>`,

@@ -34,22 +34,36 @@ export function headlineItems(result) {
   ];
 }
 
+// Each section is [title, lines, table?]; table = { headers, rows, kind? }. Screen, print and Word all render this one structure.
 export function buildBrief(snapshot) {
   const r = snapshot.results, t = r.projection?.totals;
+  const current = c => Array.isArray(c.current)
+    ? `${number(c.current[0])}% → ${number(c.current.at(-1))}% over 12 months`
+    : c.current === null ? "N/A" : `${number(c.current)} ${c.unit}`;
   return [
     ["CIO / CFO decision summary", [snapshot.scenario, `${snapshot.provenance} · Model ${snapshot.modelVersion} · ${snapshot.generatedAt}`, VALUE_DISCLAIMER]],
     ["Year-one modeled case", [
-      headlineItems(r).map(([label, value]) => `${label}: ${value}`).join(" · "),
-      t ? `Capacity value ${money(t.capacityValueSGD)}; illustrative spend ${money(t.spendSGD)} (${PRICE_DISCLAIMER}).` : `Financial outputs ${r.status}. Resolve inputs before a decision.`,
-      "Payback means cumulative capacity-value break-even, not cash investment payback; upfront costs are excluded.",
-    ]],
-    ["Pilot results · observed, not causal", r.evidence ? [
-      ...r.evidence.metrics.map(m => `${m.label}: ${metricValue(m.baseline, m.unit)} → ${metricValue(m.pilot, m.unit)} (${metricChange(m)}).`),
-      ...["baseline", "pilot"].map(phase => { const row = r.evidence[phase]; return `${phase}: ${row.start_date}–${row.end_date} (end exclusive), ${number(row.days)} days; ${number(row.prsPerMonth)} PRs/month. Source: ${row.source_label}`; }),
-    ] : ["No data while inputs are invalid."]],
-    ["Success plan · editable decision targets", snapshot.successPlan.map(s => `${s.label}: ${s.actual === null ? "N/A" : number(s.actual) + s.unit} vs target ≥${number(s.target)}${s.unit} — ${s.status}.`)],
-    ["Three assumptions most worth checking", snapshot.assumptionChecks.map(c => `${c.label}: ${Array.isArray(c.current) ? c.current.map(number).join("/") : number(c.current)} ${c.unit}. ${c.test}: capacity value impact ${money(c.capacityValueImpactSGD)}; net value impact ${money(c.netValueImpactSGD)}.`)],
-    ["Next steps", ["Engineering sponsor: validate comparable cohorts, PR attribution and a sampled labor time study. Rollout owner: confirm adoption and throughput transfer. Finance: validate costs, productive hours and commercial terms. Agree a decision gate and next measurement period."]],
+      t ? `Spend is ${PRICE_DISCLAIMER}. Payback means cumulative capacity-value break-even, not cash investment payback; upfront costs are excluded.` : `Financial outputs ${r.status}. Resolve inputs before a decision.`,
+    ], { kind: "kpi",
+      headers: [...headlineItems(r).map(([label]) => label), "Capacity value", "Illustrative spend"],
+      rows: [[...headlineItems(r).map(([, value]) => value), money(t?.capacityValueSGD), money(t?.spendSGD)]] }],
+    ["Pilot results · observed, not causal", r.evidence
+      ? ["baseline", "pilot"].map(phase => { const row = r.evidence[phase]; return `${phase === "baseline" ? "Baseline" : "Pilot"}: ${row.start_date} to ${row.end_date} (end exclusive), ${number(row.days)} days, ${number(row.prsPerMonth)} PRs/month. Source: ${row.source_label}`; })
+      : ["No data while inputs are invalid."],
+    r.evidence ? { headers: ["Metric", "Baseline", "Pilot", "Change"],
+      rows: r.evidence.metrics.map(m => [m.label, metricValue(m.baseline, m.unit), metricValue(m.pilot, m.unit), metricChange(m)]) } : undefined],
+    ["Success plan · editable decision targets", [], { kind: "status",
+      headers: ["Target", "Observed", "Goal", "Status"],
+      rows: snapshot.successPlan.map(s => [s.label, s.actual === null ? "N/A" : `${number(s.actual)}${s.unit}`, `≥ ${number(s.target)}${s.unit}`, s.status]) }],
+    ["Three assumptions most worth checking", ["Each test lowers one assumption by 20% and holds the others fixed."], {
+      headers: ["Assumption", "Current value", "Downside test", "Capacity value impact", "Net value impact"],
+      rows: snapshot.assumptionChecks.map(c => [c.label, current(c), c.test, money(c.capacityValueImpactSGD), money(c.netValueImpactSGD)]) }],
+    ["Next steps", [], { headers: ["Owner", "Action"], rows: [
+      ["Engineering sponsor", "Validate comparable cohorts, PR attribution, and a sampled labor time study."],
+      ["Rollout owner", "Confirm the adoption ramp and how well pilot throughput transfers."],
+      ["Finance", "Validate costs, productive hours, and commercial terms."],
+      ["Decision makers", "Agree a decision gate and the next measurement period."],
+    ] }],
     ["Caveats & data quality", [
       ...r.errors, ...r.warnings,
       "Downside checks change one assumption at a time, not forecasts. Cycle/review time is elapsed time, not saved labor. Readiness is ordinal, not certification. Credits are not SGD. Implementation, training, taxes and other tools are excluded; not full TCO. Full inputs and monthly figures are in Evidence JSON.",

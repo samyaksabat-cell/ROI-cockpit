@@ -98,7 +98,7 @@ hash (`#evidence`, `#inputs`, `#rollout`, `#readout`), so you can link straight 
 | 01 | **Pilot evidence** | Compare baseline and pilot across the seven metrics. Shows observation dates, the change for each metric, PRs per active engineer per month, credit intensity, and source labels. |
 | 02 | **Data & assumptions** | Download the CSV template, import data (with a preview and confirmation), edit both observation rows, edit the business assumptions, and set the 12-month adoption ramp. |
 | 03 | **Rollout case** | See year-one capacity value, illustrative spend, net capacity value, capacity hours, ROI, benefit/cost ratio, and break-even month, plus a monthly chart and a full month-by-month table. |
-| 04 | **Executive readout** | A one-page CIO/CFO summary: headlines, pilot results, editable success-plan status, three assumption checks, next steps and caveats. Print / Save as PDF, download Word, or export full Evidence JSON. |
+| 04 | **Executive readout** | A one-page CIO/CFO summary laid out as reference tables: year-one headline figures, pilot results, success-plan status (color-coded Met / Not met / No data), three assumption checks, and next steps by owner, plus caveats. Print / Save as PDF, download Word, or export full Evidence JSON. |
 
 A headline strip on Rollout case and Executive readout shows net capacity value, capacity-value ROI, payback
 (cumulative capacity-value break-even, not cash payback), and potential hours returned.

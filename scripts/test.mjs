@@ -281,6 +281,22 @@ test("brief and headline reuse totals and preserve all required sections", () =>
   const state = fixture(); state.assumptions.hoursSavedPerAssistedPR = 999;
   assert.ok(headlineItems(calculate(state)).every(([, value]) => value === "N/A"));
 });
+test("brief tables are rectangular and cover every reference section", () => {
+  const brief = buildBrief(makeSnapshot(fixture()));
+  const tables = brief.filter(([, , table]) => table).map(([title, , table]) => [title, table]);
+  assert.deepEqual(tables.map(([title]) => title.split(" ")[0]), ["Year-one", "Pilot", "Success", "Three", "Next"]);
+  for (const [, table] of tables) for (const row of table.rows) assert.equal(row.length, table.headers.length);
+  assert.equal(tables[1][1].rows.length, 7);
+  assert.deepEqual(tables[2][1].rows.map(row => row.at(-1)), ["Met", "Met", "Met"]);
+  const state = fixture(); state.assumptions.annualProductiveHours = null;
+  assert.equal(buildBrief(makeSnapshot(state))[2][2], undefined);
+});
+test("Word summary contains one table per reference section with status colors", () => {
+  const xml = new TextDecoder().decode(buildDocx(makeSnapshot(fixture())));
+  assert.equal(xml.match(/<w:tbl>/g).length, 5);
+  assert.ok(xml.includes('<w:color w:val="087560"/><w:sz w:val="16"/></w:rPr><w:t xml:space="preserve">Met<'));
+  assert.ok(xml.includes("<w:tblHeader/>"));
+});
 test("Word is a valid stored ZIP with matching CRCs and escaped shared content", () => {
   const state = fixture(); state.scenario = 'Test <&> "文本" \u0001';
   const snapshot = makeSnapshot(state), bytes = buildDocx(snapshot);

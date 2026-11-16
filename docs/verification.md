@@ -28,6 +28,9 @@ Checks run against the app served at `http://127.0.0.1:8000` (headless Chrome 15
   Month 1, 14,543 hrs). Invalid targets clear it; blocked or zero-spend cases show N/A.
 - Editing a success target updates Met / Not met; a missing metric shows No data.
 - The Word download is a valid ZIP with the summary content. Evidence JSON is schema 2.
+- The readout renders five reference tables (year-one figures, pilot results, success plan,
+  assumption checks, next steps) with no horizontal overflow at 1280 px; the Word file has the
+  same five tables. axe-core reports 0 violations on the readout at 1280 px and 390 px.
 - Print to PDF produces a one-page CIO/CFO summary, including a worst case with 200-character
   source labels, a 120-character scenario, a missing metric, and negative net value.
 - axe-core on the readout: 0 violations (4 decorative, aria-hidden nav icons need manual contrast review).
