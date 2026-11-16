@@ -29,7 +29,10 @@ Check:
    Flag arithmetic as unverifiable if matching deterministic evidence is unavailable.
 4. All seven metrics, point versus percentage-point changes, normalized periods,
    all 12 adoption values, and the productive-hours constraint.
-5. Zero denominators, negative outcomes, and blocked/unavailable projections.
+5. Schema 2/model 1.1.0: successTargets, successPlan (Met / Not met / No data),
+   and assumptionChecks (one-at-a-time 20% downside). Reuse exported impacts; do not
+   recalculate or describe cumulative capacity-value break-even as cash payback.
+6. Zero denominators, negative outcomes, and blocked/unavailable projections.
 
 Interpret benefits only as potential capacity value, not cash savings or guaranteed
 productivity. Never monetize elapsed cycle/review reductions, use readiness/credits

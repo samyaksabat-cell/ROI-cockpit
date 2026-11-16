@@ -24,6 +24,39 @@ export function metricChange(metric) {
 const md = value => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
   .replace(/([\\`*_[\]{}()!|#])/g, "\\$1").replace(/[\r\n]/g, " ");
 
+export function headlineItems(result) {
+  const t = result.projection?.totals;
+  return [
+    ["Net capacity value", money(t?.netValueSGD)],
+    ["Capacity-value ROI", t?.roiPct == null ? "N/A" : `${number(t.roiPct)}%`],
+    ["Payback (cumulative break-even)", !t ? "N/A" : t.breakEvenMonth === null ? "Not reached in 12 months" : `Month ${t.breakEvenMonth}`],
+    ["Hours returned (potential)", t ? `${number(t.capacityHours)} hrs` : "N/A"],
+  ];
+}
+
+export function buildBrief(snapshot) {
+  const r = snapshot.results, t = r.projection?.totals;
+  return [
+    ["CIO / CFO decision summary", [snapshot.scenario, `${snapshot.provenance} · Model ${snapshot.modelVersion} · ${snapshot.generatedAt}`, VALUE_DISCLAIMER]],
+    ["Year-one modeled case", [
+      headlineItems(r).map(([label, value]) => `${label}: ${value}`).join(" · "),
+      t ? `Capacity value ${money(t.capacityValueSGD)}; illustrative spend ${money(t.spendSGD)} (${PRICE_DISCLAIMER}).` : `Financial outputs ${r.status}. Resolve inputs before a decision.`,
+      "Payback means cumulative capacity-value break-even, not cash investment payback; upfront costs are excluded.",
+    ]],
+    ["Pilot results · observed, not causal", r.evidence ? [
+      ...r.evidence.metrics.map(m => `${m.label}: ${metricValue(m.baseline, m.unit)} → ${metricValue(m.pilot, m.unit)} (${metricChange(m)}).`),
+      ...["baseline", "pilot"].map(phase => { const row = r.evidence[phase]; return `${phase}: ${row.start_date}–${row.end_date} (end exclusive), ${number(row.days)} days; ${number(row.prsPerMonth)} PRs/month. Source: ${row.source_label}`; }),
+    ] : ["No data while inputs are invalid."]],
+    ["Success plan · editable decision targets", snapshot.successPlan.map(s => `${s.label}: ${s.actual === null ? "N/A" : number(s.actual) + s.unit} vs target ≥${number(s.target)}${s.unit} — ${s.status}.`)],
+    ["Three assumptions most worth checking", snapshot.assumptionChecks.map(c => `${c.label}: ${Array.isArray(c.current) ? c.current.map(number).join("/") : number(c.current)} ${c.unit}. ${c.test}: capacity value impact ${money(c.capacityValueImpactSGD)}; net value impact ${money(c.netValueImpactSGD)}.`)],
+    ["Next steps", ["Engineering sponsor: validate comparable cohorts, PR attribution and a sampled labor time study. Rollout owner: confirm adoption and throughput transfer. Finance: validate costs, productive hours and commercial terms. Agree a decision gate and next measurement period."]],
+    ["Caveats & data quality", [
+      ...r.errors, ...r.warnings,
+      "Downside checks change one assumption at a time, not forecasts. Cycle/review time is elapsed time, not saved labor. Readiness is ordinal, not certification. Credits are not SGD. Implementation, training, taxes and other tools are excluded; not full TCO. Full inputs and monthly figures are in Evidence JSON.",
+    ]],
+  ];
+}
+
 export function buildReadout(snapshot) {
   const { results: result, assumptions: a } = snapshot;
   const lines = [

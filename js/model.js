@@ -1,6 +1,32 @@
-import { validateState } from "./validation.js";
+import { SUCCESS_TARGET_FIELDS, validateState } from "./validation.js";
 
-export const MODEL_VERSION = "1.0.0";
+export { SUCCESS_TARGET_FIELDS };
+
+export const MODEL_VERSION = "1.1.0";
+export const DEFAULT_SUCCESS_TARGETS = { cycleReductionPct: 20, assistedSharePct: 40, readinessLevel: 3 };
+
+// Tolerance keeps decimal inputs such as 10.5 → 8.4 hours (19.999…%) from failing an exact 20% target.
+export function successPlan(evidence, targets = DEFAULT_SUCCESS_TARGETS) {
+  const values = [evidence?.metrics[0].improvementPct ?? null, evidence?.pilot.assistedSharePct ?? null, evidence?.pilot.readiness_level ?? null];
+  return SUCCESS_TARGET_FIELDS.map(([key, label, unit], i) => ({
+    key, label, unit, target: targets[key], actual: values[i],
+    status: values[i] === null ? "No data" : values[i] >= targets[key] - 1e-9 ? "Met" : "Not met",
+  }));
+}
+
+// Linear downside checks, not forecasts or confidence intervals. Costs stay fixed
+// except when adoption itself falls, reducing active engineer-months by 20%.
+export function assumptionChecks(state, result) {
+  const t = result.projection?.totals;
+  return [
+    { label: "Hours saved per assisted PR", current: state.assumptions.hoursSavedPerAssistedPR, unit: "hours / assisted PR", test: "20% fewer assumed hours", scalesSpend: false },
+    { label: "Adoption ramp", current: [...state.assumptions.adoptionRampPct], unit: "% by month", test: "Every month's adoption 20% lower", scalesSpend: true },
+    { label: "Throughput transfer to wider rollout", current: result.evidence?.pilot.prsPerEngineerMonth ?? null, unit: "PRs / active engineer / month; assumes 100% transfer", test: "20% lower transferred throughput", scalesSpend: false },
+  ].map(item => ({ ...item,
+    capacityValueImpactSGD: t ? -0.2 * t.capacityValueSGD : null,
+    netValueImpactSGD: t ? -0.2 * (item.scalesSpend ? t.netValueSGD : t.capacityValueSGD) : null,
+  }));
+}
 export const PRICE_DISCLAIMER = "illustrative, not Factory list price";
 export const VALUE_DISCLAIMER = "Potential capacity value, not cash savings or guaranteed productivity.";
 export const DEMO_DISCLAIMER = "DBS, illustrative. Synthetic data, not customer results or an endorsement.";
@@ -132,10 +158,14 @@ export function calculate(state) {
 }
 
 export function makeSnapshot(state, generatedAt = new Date().toISOString()) {
+  const results = calculate(state);
+  const targets = state.successTargets ?? DEFAULT_SUCCESS_TARGETS;
   return {
-    schemaVersion: 1, modelVersion: MODEL_VERSION, generatedAt,
+    schemaVersion: 2, modelVersion: MODEL_VERSION, generatedAt,
     scenario: state.scenario, provenance: state.provenance,
     observations: structuredClone(state.observations), assumptions: structuredClone(state.assumptions),
-    results: calculate(state), limitations: [...LIMITATIONS], priceDisclaimer: PRICE_DISCLAIMER,
+    successTargets: structuredClone(targets), successPlan: successPlan(results.evidence, targets),
+    assumptionChecks: assumptionChecks(state, results),
+    results, limitations: [...LIMITATIONS], priceDisclaimer: PRICE_DISCLAIMER,
   };
 }

@@ -1,4 +1,4 @@
-# Data contract · schema 1
+# Data contract · schema 2
 
 ## Input: two aggregate CSV records
 
@@ -56,17 +56,28 @@ reconstruct PR events, verify attribution, or merge averages from subgroups.
 Adoption may fall; it is not cumulative new hires. The projected active engineer count
 may be fractional because it represents expected engineer-equivalents.
 
+## Success targets
+`successTargets` has cycleReductionPct and assistedSharePct (0–100), and integer
+readinessLevel (1–5). Defaults: 20, 40, 3. Missing targets in older in-memory callers
+use defaults; new snapshots always include them. A target is Met when observed
+value ≥ target, Not met otherwise, and No data for missing/undefined comparisons.
+Targets do not change rollout economics. Invalid targets suppress outputs.
+
 ## Exported JSON snapshot
 The browser exports:
 ```text
 {
-  schemaVersion: 1,
-  modelVersion: "1.0.0",
+  schemaVersion: 2,
+  modelVersion: "1.1.0",
   generatedAt: ISO timestamp,
   scenario: nonempty label (max 120 characters),
   provenance: "synthetic" | "customer-provided, unverified",
   observations: [baseline aggregate, pilot aggregate],
   assumptions: { ...above keys },
+  successTargets: { cycleReductionPct: 20, assistedSharePct: 40, readinessLevel: 3 },
+  successPlan: [{ key, label, unit, target, actual, status }],
+  assumptionChecks: [{ label, current, unit, test, scalesSpend,
+                       capacityValueImpactSGD, netValueImpactSGD }],
   results: {
     status: "ready" | "invalid" | "unavailable" | "blocked",
     errors: string[],

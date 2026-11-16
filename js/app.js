@@ -1,7 +1,9 @@
 import { ASSUMPTION_FIELDS, NUMBER_FIELDS, parseNumber, MAX_UPLOAD_BYTES, validateState } from "./validation.js";
 import { parseCSV } from "./csv.js";
-import { DEFAULT_ASSUMPTIONS, DEMO_DISCLAIMER, MODEL_VERSION, PRICE_DISCLAIMER, LIMITATIONS, METRICS, calculate, makeSnapshot } from "./model.js";
-import { buildReadout, metricValue, metricChange, number, money } from "./readout.js";
+import { DEFAULT_SUCCESS_TARGETS, SUCCESS_TARGET_FIELDS, DEFAULT_ASSUMPTIONS, DEMO_DISCLAIMER, MODEL_VERSION, PRICE_DISCLAIMER, METRICS, calculate, makeSnapshot } from "./model.js";
+import { buildBrief, headlineItems, buildReadout, metricValue, metricChange, number, money } from "./readout.js";
+
+import { buildDocx } from "./docx.js";
 
 const $ = id => document.getElementById(id);
 const el = (tag, className = "", text = null) => {
@@ -69,6 +71,7 @@ showView();
 function newDemoState() {
   return {
     scenario: "DBS, illustrative", provenance: "synthetic",
+    successTargets: structuredClone(DEFAULT_SUCCESS_TARGETS),
     observations: structuredClone(demo), assumptions: structuredClone(DEFAULT_ASSUMPTIONS),
   };
 }
@@ -116,6 +119,12 @@ function buildInputs() {
     wrapper.append(labelNode, input, el("small", "", unit));
     if (key === "creditCostPerEngineerMonthSGD") wrapper.append(el("small", "price-warning", PRICE_DISCLAIMER));
     return wrapper;
+  }));
+  put("target-inputs", ...SUCCESS_TARGET_FIELDS.map(([key, label, unit, min, max]) => {
+    const wrapper = el("div", "assumption-field"), title = el("label", "", `${label} (≥)`);
+    title.htmlFor = `target-${key}`;
+    const input = inputElement(title.htmlFor, state.successTargets[key], "number", `${label} target`, { min, max, integer: key === "readinessLevel" });
+    input.dataset.target = key; wrapper.append(title, input, el("small", "", unit)); return wrapper;
   }));
   put("ramp-inputs", ...state.assumptions.adoptionRampPct.map((pct, index) => {
     const wrapper = el("div"), label = el("label", "", `Month ${index + 1}`);
@@ -214,30 +223,14 @@ function renderRollout(result) {
 }
 
 function renderReport(snapshot) {
-  const { results: r, assumptions: a } = snapshot;
-  const readout = buildReadout(snapshot);
-  $("report-title").textContent = snapshot.scenario;
-  $("report-provenance").textContent = `${snapshot.provenance} · Model ${snapshot.modelVersion} · ${snapshot.generatedAt}`;
-  const executiveText = readout.split("## Executive summary\n")[1].split("\n## Observed evidence")[0].trim();
-  put("report-summary", ...executiveText.split("\n").filter(Boolean).map(text => el("p", "", text)));
-  put("report-evidence", evidenceTable(r.evidence));
-  for (const phase of ["baseline", "pilot"]) {
-    const row = r.evidence?.[phase];
-    if (row) $("report-evidence").append(el("p", "report-period", `${phase}: ${row.start_date} → ${row.end_date} (end exclusive), ${number(row.days)} days. Source: ${row.source_label}. Normalized PRs/month: ${number(row.prsPerMonth)}; PRs/active engineer/month: ${number(row.prsPerEngineerMonth)}. Credit intensity: ${number(row.creditsPerAssistedPR)} credits/PR (assisted).`));
-  }
-  put("report-assumptions", ...list([
-    ...ASSUMPTION_FIELDS.map(([key, label, unit]) => `${label}: ${number(a[key])} ${unit}${key === "creditCostPerEngineerMonthSGD" ? ` (${PRICE_DISCLAIMER})` : ""}.`),
-    `Monthly adoption (% of total scope active): ${a.adoptionRampPct.map(number).join(", ")}.`,
-  ]));
-  put("report-limitations", ...list([...r.errors, ...r.warnings, ...LIMITATIONS]));
-  // Print the complete month table too, not just the headline case.
-  if (r.projection) {
-    const table = $("rollout-table").firstElementChild.cloneNode(true);
-    const heading = el("h3", "", "12-month rollout");
-    $("report-assumptions").append(el("li", "", "Month-by-month economics are included below and in both exports."));
-    put("report-monthly", heading, table);
-  } else put("report-monthly");
-  $("readout-preview").textContent = readout;
+  const blocks = buildBrief(snapshot);
+  put("brief-content", ...blocks.map(([title, lines], index) => {
+    const section = el("section", "brief-section");
+    section.append(el(index === 0 ? "h2" : "h3", "", title));
+    for (const line of lines) section.append(el("p", "", line));
+    return section;
+  }));
+  $("readout-preview").textContent = buildReadout(snapshot);
 }
 
 function render() {
@@ -253,12 +246,15 @@ function render() {
   const warnings = result.warnings.filter(w => w !== DEMO_DISCLAIMER);
   $("status").hidden = result.status === "ready" && warnings.length === 0;
   $("status").textContent = warnings.join("\n");
-  for (const id of ["download-snapshot", "download-readout", "print-readout"]) $(id).disabled = result.status === "invalid";
+  for (const id of ["download-snapshot", "download-readout", "print-readout", "print-summary"]) $(id).disabled = result.status === "invalid";
   document.querySelectorAll("input:not([type=file])").forEach(input => {
     input.setAttribute("aria-invalid", String(Boolean(!input.checkValidity()
       || (input.required && !input.value.trim())
       || (input.dataset.positive && !(parseNumber(input.value) > 0)))));
   });
+  put("headline-strip", ...headlineItems(result).map(([label, value]) => {
+    const item = el("div"); item.append(el("dt", "", label), el("dd", "", value)); return item;
+  }));
   renderEvidence(result); renderRollout(result); renderReport(snapshot);
 }
 
@@ -280,7 +276,8 @@ document.addEventListener("input", event => {
   else if (input.dataset.observation) {
     const row = state.observations.find(row => row.phase === input.dataset.observation);
     row[input.dataset.field] = NUMBER_FIELDS.includes(input.dataset.field) ? numericValue() : input.value;
-  } else if (input.dataset.assumption) state.assumptions[input.dataset.assumption] = numericValue();
+  } else if (input.dataset.target) state.successTargets[input.dataset.target] = numericValue();
+  else if (input.dataset.assumption) state.assumptions[input.dataset.assumption] = numericValue();
   else if (input.dataset.month !== undefined) state.assumptions.adoptionRampPct[Number(input.dataset.month)] = numericValue();
   else return;
   render();
@@ -292,7 +289,7 @@ $("download-snapshot").addEventListener("click", () => {
 });
 $("download-readout").addEventListener("click", () => {
   const snapshot = makeSnapshot(state);
-  if (snapshot.results.status !== "invalid") download("roi-cockpit-readout.md", buildReadout(snapshot), "text/markdown;charset=utf-8");
+  if (snapshot.results.status !== "invalid") download("roi-cockpit-readout.docx", buildDocx(snapshot), "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 });
 $("download-template").addEventListener("click", async () => {
   try {
@@ -301,7 +298,9 @@ $("download-template").addEventListener("click", async () => {
     download("roi-cockpit-template.csv", await response.text(), "text/csv;charset=utf-8");
   } catch (error) { $("import-error").hidden = false; $("import-error").textContent = error.message; }
 });
-$("print-readout").addEventListener("click", () => window.print());
+const printReadout = () => { if (calculate(state).status !== "invalid") window.print(); };
+$("print-readout").addEventListener("click", printReadout);
+$("print-summary").addEventListener("click", printReadout);
 $("reset-demo").addEventListener("click", () => { if (demo) $("reset-dialog").showModal(); });
 $("cancel-reset").addEventListener("click", () => $("reset-dialog").close());
 $("confirm-reset").addEventListener("click", () => {
@@ -341,10 +340,6 @@ $("confirm-import").addEventListener("click", () => {
   pendingImport = null; buildInputs(); render(); $("import-dialog").close();
 });
 
-// Reserve an accessible region for the print-ready monthly economics.
-const monthlyRegion = el("div", "table-wrap");
-monthlyRegion.id = "report-monthly"; monthlyRegion.tabIndex = 0; monthlyRegion.setAttribute("aria-label", "Readout monthly economics");
-$("report-assumptions").after(monthlyRegion);
 document.querySelectorAll('[tabindex="0"][aria-label]').forEach(node => node.setAttribute("role", "region"));
 $("scenario").required = true;
 $("csv-file").setAttribute("aria-label", "Import aggregate pilot CSV");

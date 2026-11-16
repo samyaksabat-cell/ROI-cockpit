@@ -3,7 +3,9 @@ import { readFile } from "node:fs/promises";
 import { parseCSV, serializeCSV } from "../js/csv.js";
 import { calculate, DEFAULT_ASSUMPTIONS, makeSnapshot, PRICE_DISCLAIMER, VALUE_DISCLAIMER } from "../js/model.js";
 import { MAX_UPLOAD_BYTES, parseNumber, validateState } from "../js/validation.js";
-import { buildReadout, metricChange, money } from "../js/readout.js";
+import { buildBrief, headlineItems, buildReadout, metricChange, money } from "../js/readout.js";
+import { buildDocx } from "../js/docx.js";
+import { crc32 } from "node:zlib";
 
 let passed = 0;
 const test = (label, fn) => {
@@ -193,7 +195,7 @@ test("snapshot reproduces calculation and readout contains shared numbers and di
   assert.deepEqual(snapshot.results, calculate(snapshot));
   const readout = buildReadout(snapshot);
   for (const expected of [money(960000), money(192000), money(768000), "9,600", "400%", "5×", PRICE_DISCLAIMER, VALUE_DISCLAIMER, "Synthetic data"]) assert.ok(readout.includes(expected), expected);
-  assert.equal(snapshot.schemaVersion, 1);
+  assert.equal(snapshot.schemaVersion, 2);
   assert.ok(!/NaN|Infinity/.test(readout + JSON.stringify(snapshot)));
 });
 test("edge-case exports have N/A rather than NaN/Infinity", () => {
@@ -229,5 +231,74 @@ test("Factory resource definitions have required names and constrained tool poli
   assert.match(skill, /user-invocable: true/);
   assert.ok(skill.includes("configured model service"));
   assert.ok(droid.includes("unverifiable"));
+});
+test("success-plan default, edited, exact-boundary and missing statuses", () => {
+  const state = fixture();
+  let snapshot = makeSnapshot(state);
+  assert.deepEqual(snapshot.successPlan.map(s => s.status), ["Met", "Met", "Met"]);
+  state.successTargets = { cycleReductionPct: 40, assistedSharePct: 50, readinessLevel: 4 };
+  snapshot = makeSnapshot(state);
+  assert.deepEqual(snapshot.successPlan.map(s => s.status), ["Not met", "Met", "Not met"]);
+  state.observations[0].pr_cycle_hours = 0;
+  state.observations[1].readiness_level = null;
+  Object.assign(state.observations[1], { prs_merged: 0, agent_assisted_prs: 0, active_engineers: 0 });
+  assert.deepEqual(makeSnapshot(state).successPlan.map(s => s.status), ["No data", "No data", "No data"]);
+});
+test("decimal cycle times exactly at the target count as met", () => {
+  for (const [b, p] of [[10.5, 8.4], [1, 0.8], [5.5, 4.4], [8, 6.4]]) {
+    const state = fixture(); state.observations[0].pr_cycle_hours = b; state.observations[1].pr_cycle_hours = p;
+    assert.equal(makeSnapshot(state).successPlan[0].status, "Met", `${b} → ${p}`);
+  }
+});
+test("Word heading properties follow schema order", () => {
+  const xml = new TextDecoder().decode(buildDocx(makeSnapshot(fixture())));
+  assert.ok(xml.includes("<w:pPr><w:keepNext/><w:spacing"));
+  assert.ok(!/<w:spacing[^>]*\/><w:keepNext\/>/.test(xml));
+});
+test("invalid targets suppress stale figures and target edits never change economics", () => {
+  const state = fixture(), before = calculate(state).projection;
+  state.successTargets = { cycleReductionPct: 100, assistedSharePct: 100, readinessLevel: 5 };
+  assert.deepEqual(calculate(state).projection, before);
+  for (const [key, invalid] of [["cycleReductionPct", 101], ["assistedSharePct", null], ["readinessLevel", 2.5]]) {
+    const bad = structuredClone(state); bad.successTargets[key] = invalid;
+    assert.equal(calculate(bad).status, "invalid");
+    assert.equal(makeSnapshot(bad).results.projection, null);
+  }
+});
+test("independent downside checks: value -192k, adoption net -153600, others net -192k", () => {
+  const snapshot = makeSnapshot(fixture());
+  assert.deepEqual(snapshot.assumptionChecks.map(c => c.capacityValueImpactSGD), [-192000, -192000, -192000]);
+  assert.deepEqual(snapshot.assumptionChecks.map(c => c.netValueImpactSGD), [-192000, -153600, -192000]);
+  const state = fixture(); state.assumptions.creditCostPerEngineerMonthSGD = 2000;
+  assert.equal(makeSnapshot(state).assumptionChecks[1].netValueImpactSGD, 192000);
+  state.assumptions.hoursSavedPerAssistedPR = 999;
+  assert.ok(makeSnapshot(state).assumptionChecks.every(c => c.netValueImpactSGD === null));
+});
+test("brief and headline reuse totals and preserve all required sections", () => {
+  const snapshot = makeSnapshot(fixture());
+  const text = JSON.stringify(buildBrief(snapshot));
+  for (const expected of ["768,000", "400%", "Month 1", "9,600", "Pilot results", "Success plan", "Three assumptions", "Next steps", PRICE_DISCLAIMER, VALUE_DISCLAIMER, "Synthetic data"]) assert.ok(text.includes(expected), expected);
+  const state = fixture(); state.assumptions.hoursSavedPerAssistedPR = 999;
+  assert.ok(headlineItems(calculate(state)).every(([, value]) => value === "N/A"));
+});
+test("Word is a valid stored ZIP with matching CRCs and escaped shared content", () => {
+  const state = fixture(); state.scenario = 'Test <&> "文本" \u0001';
+  const snapshot = makeSnapshot(state), bytes = buildDocx(snapshot);
+  const view = new DataView(bytes.buffer);
+  let offset = 0, count = 0, document = "";
+  while (view.getUint32(offset, true) === 0x04034b50) {
+    const length = view.getUint32(offset + 18, true), nameLength = view.getUint16(offset + 26, true);
+    const name = new TextDecoder().decode(bytes.slice(offset + 30, offset + 30 + nameLength));
+    const data = bytes.slice(offset + 30 + nameLength, offset + 30 + nameLength + length);
+    assert.equal(crc32(data), view.getUint32(offset + 14, true));
+    if (name === "word/document.xml") document = new TextDecoder().decode(data);
+    offset += 30 + nameLength + length; count++;
+  }
+  assert.equal(count, 3); assert.equal(view.getUint32(offset, true), 0x02014b50);
+  assert.equal(view.getUint32(bytes.length - 22, true), 0x06054b50);
+  assert.match(document, /Test &lt;&amp;&gt; &quot;文本&quot;/);
+  assert.ok(!document.includes("\u0001"));
+  for (const expected of ["768,000", "960,000", "192,000", "Success plan", "Next steps"]) assert.ok(document.includes(expected));
+  assert.ok(!/NaN|Infinity/.test(document));
 });
 console.log(`\n${passed} checks passed.`);

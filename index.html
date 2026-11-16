@@ -29,9 +29,11 @@
     <main id="main" tabindex="-1">
       <div class="page-heading">
         <div><p class="eyebrow">PILOT WORKSPACE <span> / </span> SINGAPORE · SGD</p><h1>From pilot to possibility.</h1><p class="subtitle">Turn engineering evidence into a business case you can stand behind.</p></div>
-        <div class="heading-actions"><button id="download-snapshot" class="button secondary" disabled>↓ Evidence JSON</button><button id="download-readout" class="button primary" disabled>↓ Export readout</button></div>
+        <div class="heading-actions"><button id="download-snapshot" class="button secondary" disabled>↓ Evidence JSON</button><button id="print-summary" class="button primary" disabled>Print readout</button><button id="download-readout" class="button secondary" disabled>↓ Word (.docx)</button></div>
       </div>
       <div class="scenario-strip"><div><span id="provenance-badge" class="badge synthetic">Synthetic</span><strong id="scenario-display">DBS, illustrative</strong></div><span id="scenario-note">Synthetic data, not customer results or an endorsement.</span></div>
+      <dl id="headline-strip" class="headline-strip" aria-label="Year-one modeled headline numbers"></dl>
+      <p class="headline-note">Potential capacity value, not cash savings or guaranteed productivity. Payback = cumulative capacity-value break-even, excluding upfront costs.</p>
       <div id="status" class="notice" role="status" aria-live="polite">Loading synthetic fixture…</div>
       <div id="validation-errors" class="notice error" role="alert" hidden></div>
       <noscript><p class="notice error">JavaScript is required for local calculations. No customer data leaves this page.</p></noscript>
@@ -57,6 +59,8 @@
           <div id="observation-inputs" class="table-wrap" tabindex="0" aria-label="Editable observation data"></div>
           <p class="panel-helper">Cycle and review hours are arithmetic means for merged PRs. Leave unavailable hours, credits, or readiness blank, never zero-fill. Counts and active engineers are required. Dates use YYYY-MM-DD.</p>
         </div>
+        <div class="section-heading compact"><div><h3>Pilot success plan</h3><p>Editable targets on observed metrics. Met / Not met / No data. Not a certification or causal test.</p></div></div>
+        <div id="target-inputs" class="assumption-grid"></div>
         <div class="section-heading compact"><div><h3>Business-case assumptions</h3><p>Editable estimates, not measured outcomes. All starter values are synthetic.</p></div><span class="badge assumption">Assumption</span></div>
         <div id="assumption-inputs" class="assumption-grid"></div>
         <div class="panel ramp-panel"><div class="panel-heading"><div><h3>Adoption ramp</h3><p>Share of total in-scope engineers active each month. Decreases are allowed.</p></div><span class="badge assumption">12 MONTHS</span></div><div id="ramp-inputs" class="ramp-grid"></div></div>
@@ -73,7 +77,7 @@
 
       <section id="readout" class="view" aria-labelledby="readout-heading" hidden>
         <div class="section-heading"><div><p class="eyebrow">04 / TAKE A CLEAR STORY FORWARD</p><h2 id="readout-heading">Executive readout</h2><p>A reproducible brief, with the evidence and caveats attached.</p></div><button id="print-readout" class="button secondary">Print readout</button></div>
-        <article class="panel report"><div class="report-masthead"><span class="eyebrow">PILOT → BUSINESS CASE</span><span class="badge modeled">Decision draft</span></div><h2 id="report-title">Pilot business case</h2><p id="report-provenance" class="helper"></p><div id="report-summary"></div><div class="report-callout">Potential capacity value, not cash savings or guaranteed productivity.</div><h3>Evidence at a glance</h3><div id="report-evidence" class="table-wrap" tabindex="0" aria-label="Readout evidence table"></div><h3>What needs to be true</h3><ul id="report-assumptions"></ul><h3>Before a rollout decision</h3><ol><li>Confirm comparable teams, measurement definitions, and PR attribution with the engineering sponsor.</li><li>Validate assumed labor hours saved using a sampled time study, not elapsed cycle-time changes.</li><li>Confirm adoption, commercial terms, productive hours, and excluded costs with finance.</li><li>Agree a decision gate, a measurement owner, and the next observation period.</li></ol><h3>Limitations &amp; data quality</h3><ul id="report-limitations"></ul></article>
+        <article id="brief-content" class="panel report executive-brief" aria-label="CIO and CFO one-page decision summary"></article>
         <details class="panel source-preview"><summary>Full Markdown report preview, including monthly figures</summary><pre id="readout-preview"></pre></details>
         <p class="notice">Exports stay on your device unless you share them. Browser-local calculations do not imply local AI processing: using <code>/pilot-readout</code> with customer data requires explicit authorization for your configured Droid/model service.</p>
       </section>

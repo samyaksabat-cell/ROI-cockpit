@@ -16,6 +16,11 @@ export const ASSUMPTION_FIELDS = [
   ["annualProductiveHours", "Annual productive hours", "hours / engineer / year", 0, false, true],
   ["creditCostPerEngineerMonthSGD", "Credit cost per active engineer", "SGD / engineer / month", 0],
 ];
+export const SUCCESS_TARGET_FIELDS = [
+  ["cycleReductionPct", "Cycle time reduction", "% lower", 0, 100],
+  ["assistedSharePct", "Pilot assisted PR share", "%", 0, 100],
+  ["readinessLevel", "Pilot readiness", " / 5", 1, 5],
+];
 const INTEGER_FIELDS = new Set(["prs_merged", "agent_assisted_prs", "readiness_level", "active_engineers"]);
 const OPTIONAL_FIELDS = new Set(["pr_cycle_hours", "review_turnaround_hours", "readiness_level", "factory_credits"]);
 export const MAX_NUMBER = 1e12;
@@ -91,6 +96,12 @@ export function validateAssumptions(a) {
 
 export function validateState(state) {
   const errors = [...validateObservations(state.observations), ...validateAssumptions(state.assumptions)];
+  if (state.successTargets !== undefined) {
+    for (const [key, label, , min, max] of SUCCESS_TARGET_FIELDS) {
+      const value = state.successTargets?.[key];
+      if (!validNumber(value, min, key === "readinessLevel") || value > max) errors.push(`${label} target: enter ${key === "readinessLevel" ? "an integer" : "a number"} from ${min} to ${max}.`);
+    }
+  }
   for (const row of state.observations ?? []) {
     if (row.active_engineers > state.assumptions?.pilotEngineers) errors.push(`${row.phase}: active engineers exceed engineers in pilot. Adjust the cohort assumption or the data.`);
   }

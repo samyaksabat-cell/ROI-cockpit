@@ -98,7 +98,13 @@ hash (`#evidence`, `#inputs`, `#rollout`, `#readout`), so you can link straight 
 | 01 | **Pilot evidence** | Compare baseline and pilot across the seven metrics. Shows observation dates, the change for each metric, PRs per active engineer per month, credit intensity, and source labels. |
 | 02 | **Data & assumptions** | Download the CSV template, import data (with a preview and confirmation), edit both observation rows, edit the business assumptions, and set the 12-month adoption ramp. |
 | 03 | **Rollout case** | See year-one capacity value, illustrative spend, net capacity value, capacity hours, ROI, benefit/cost ratio, and break-even month, plus a monthly chart and a full month-by-month table. |
-| 04 | **Executive readout** | A print-ready brief: summary, evidence table, assumptions, monthly economics, next steps, and limitations. Export it as Markdown or JSON, or print it. |
+| 04 | **Executive readout** | A one-page CIO/CFO summary: headlines, pilot results, editable success-plan status, three assumption checks, next steps and caveats. Print / Save as PDF, download Word, or export full Evidence JSON. |
+
+A headline strip on every view shows net capacity value, capacity-value ROI, payback
+(cumulative capacity-value break-even, not cash payback), and potential hours returned.
+Success targets default to cycle time ≥20% lower, assisted share ≥40%, and readiness ≥3.
+Edit them in Data & assumptions. Missing evidence is No data, never a failed zero.
+Each of the three fixed assumptions includes a one-at-a-time 20% downside check.
 
 Colored badges mark where each number comes from: **Synthetic**, **Customer-provided,
 unverified**, **Assumption**, or **Modeled**.
@@ -240,9 +246,9 @@ check confirms format and consistency, not that the numbers are true.
 
 | Output | Button | Contents |
 | --- | --- | --- |
-| Markdown readout | **Export readout** | Executive summary, evidence table, assumptions, 12-month table, limitations, and next steps. Text from the data is escaped so it cannot inject links or HTML. |
-| JSON evidence snapshot | **Evidence JSON** | `schemaVersion`, model version, timestamp, scenario, provenance, both observations, all assumptions, full-precision results, warnings, and limitations. |
-| Print / PDF | **Print readout** | Prints only the readout, including monthly economics, sized for A4. |
+| Word document | **Word (.docx)** | The CIO/CFO summary, generated locally as a real Office document. Labels are inert escaped text. |
+| JSON evidence snapshot | **Evidence JSON** | `schemaVersion`, model version, timestamp, scenario, provenance, both observations, all assumptions, success targets/status, downside checks, full-precision results, warnings, and limitations. |
+| Print / PDF | **Print readout** | Prints only the one-page CIO/CFO summary, sized for A4. Choose Save as PDF in the browser dialog (100% scale, default A4 margins, headers/footers off). Full monthly figures remain in Evidence JSON. |
 
 Downloads only happen when you click. Exports are disabled while inputs are invalid.
 Treat an export as sensitive whenever its inputs are.
@@ -294,7 +300,8 @@ ROI-cockpit/
 │   ├── model.js          All formulas and business rules (single source of truth)
 │   ├── validation.js     Field definitions and validation rules
 │   ├── csv.js            CSV parsing and serialization
-│   └── readout.js        Number formatting and the Markdown readout
+│   ├── readout.js        Shared brief, number formatting and detailed preview
+│   └── docx.js           Dependency-free browser Word package writer
 ├── data/
 │   ├── demo.csv          Synthetic demo observations
 │   └── template.csv      Import template (illustrative values)
@@ -346,7 +353,7 @@ To use them, open Droid in the project folder and accept the folder-trust prompt
 ## Testing and verification
 
 ```sh
-node scripts/test.mjs     # 48 checks; exits non-zero on any failure
+node scripts/test.mjs     # 55 checks; exits non-zero on any failure
 node --check js/app.js    # syntax check for the UI module
 ```
 
@@ -367,7 +374,7 @@ width, network, console, and an axe-core accessibility audit) are recorded in
 - [ ] Any invalid edit clears results and disables exports.
 - [ ] Zero adoption, zero cost, missing metrics, and impossible saved hours behave as in [Edge cases](#edge-cases).
 - [ ] Exported totals match the screen and include the required disclaimers.
-- [ ] Printing produces the readout with the monthly table.
+- [ ] Printing produces the one-page CIO/CFO summary; Word opens with matching figures.
 - [ ] Reload restores the synthetic demo; no console errors or external requests.
 
 ---

@@ -1,4 +1,4 @@
-# Capacity-value methodology · model 1.0.0
+# Capacity-value methodology · model 1.1.0
 
 **Potential capacity value, not cash savings or guaranteed productivity.**
 
@@ -70,6 +70,24 @@ adopted month. This is not investment payback: no upfront implementation cost is
   output instead of silently capping the result. This is checked per adopted month.
 - Full precision is used internally. A tiny floating-point comparison tolerance
   (1e-9 hours per engineer/month) avoids rejecting an exactly equal capacity bound.
+
+## Success plan and assumption checks
+Success targets compare observed cycle-time reduction (%), pilot assisted share (%),
+and pilot readiness (points) with editable ≥ thresholds. A zero/missing baseline
+cycle time cannot establish relative reduction and yields No data. Readiness is
+not certification. Targets are decision criteria, not benefit multipliers.
+
+The brief checks three fixed assumptions independently at 20% below current input:
+- Hours saved per assisted PR: value impact = −20% × capacity value; spend unchanged.
+- Adoption ramp: each month's percentage × 0.8; value and spend both fall 20%,
+  so net value impact = −20% × current net value (which may be positive for a loss case).
+- Throughput transfer: pilot PRs/active engineer/month × 0.8, holding assisted share
+  constant; value falls 20%, spend unchanged. Base case assumes 100% transfer.
+
+These are linear downside checks, not forecasts, confidence intervals, or a ranking
+of uncertainty. Financial impacts are N/A when the base projection is unavailable.
+The headline “payback” is the existing cumulative capacity-value break-even, not
+cash investment payback. Full monthly economics remain in Evidence JSON and Rollout case.
 
 ## Independent arithmetic check
 10 PRs/active engineer/month × 50% assisted × 2 assumed hours/assisted PR =
